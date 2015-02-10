@@ -74,7 +74,7 @@ class Configuration implements ConfigurationInterface
           ->fixXmlConfig('role', 'roles')
           ->children()
               ->arrayNode('roles')
-                  ->isRequired()
+                  //->isRequired()
                   ->prototype('array')
                       ->children()
                       ->scalarNode('base_dn')->isRequired()->cannotBeEmpty()->end()
