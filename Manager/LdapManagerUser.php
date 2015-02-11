@@ -41,14 +41,14 @@ class LdapManagerUser implements LdapManagerUserInterface
         if (strlen($this->password) === 0) {
             throw new ConnectionException('Password can\'t be empty');
         }
-        
+
         if (null === $this->ldapUser) {
             $this->bindByUsername();
             $this->doPass();
         } else {
             $this->doPass();
             $this->bindByDn();
-        }        
+        }
     }
 
     /**
@@ -164,7 +164,7 @@ class LdapManagerUser implements LdapManagerUserInterface
         if (!$this->username) {
             throw new \InvalidArgumentException('User is not defined, please use setUsername');
         }
-        
+
         $user = null;
         $count = 0;
         foreach($this->params['users'] as $param)
@@ -173,18 +173,24 @@ class LdapManagerUser implements LdapManagerUserInterface
                 ? $param['filter']
                 : '';
 
-            $entries = $this->ldapConnection
-                ->search(array(
-                    'base_dn' => $param['base_dn'],
-                    'filter' => sprintf('(&%s(%s=%s))',
-                                        $filter,
-                                        $param['name_attribute'],
-                                        $this->ldapConnection->escape($this->username)
-                    )
-                ));
-            
+            try {
+                $entries = $this->ldapConnection
+                    ->search(array(
+                        'base_dn' => $param['base_dn'],
+                        'filter' => sprintf('(&%s(%s=%s))',
+                                            $filter,
+                                            $param['name_attribute'],
+                                            $this->ldapConnection->escape($this->username)
+                        )
+                    ));
+            }
+            // if exception is throwed, test next entry in $params['users']
+            catch (ConnectionException $e) {
+                break;
+            }
+
             $count += $entries['count'];
-            
+
             if($entries['count'] === 1)
                 $user = $entries[0];
         }
@@ -213,7 +219,7 @@ class LdapManagerUser implements LdapManagerUserInterface
         if (null === $this->ldapUser) {
             throw new \RuntimeException('Cannot assign LDAP roles before authenticating user against LDAP');
         }
-        
+
         $this->ldapUser['roles'] = array();
 
         if (true === $this->params['client']['skip_roles']) {
